@@ -13,12 +13,11 @@ router_v1.register('auth/signup', RegisterViewSet, basename='register_view')
 router_v1.register('auth/token', TokenViewSet, basename='token_view')
 router_v1.register(r'users', UsersViewSet, basename='profile_view')
 router_v1.register(r'titles/(?P<title_id>\d+)/reviews',
-                    ReviewViewSet, basename='reviews')
+                   ReviewViewSet, basename='reviews')
 router_v1.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentViewSet, basename='comments'
 )
-
 
 
 urlpatterns = [

@@ -1,14 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
-from rest_framework.response import Response
 from reviews.models import Comment, Review
 from categories.models import Genres, Titles, Categories, TitlesGenres
 from users.models import User
-from rest_framework.validators import UniqueTogetherValidator
 import datetime as dt
-
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -23,7 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value.lower() == 'me':
             raise serializers.ValidationError(
-                    'It is forbidden to use this name as a username.'
+                'It is forbidden to use this name as a username.'
             )
         return value
 
@@ -46,11 +42,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Genres
         fields = ('name', 'slug')
-        
+
+
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True,
@@ -72,14 +69,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
-    
     def validate(self, data):
         if self.context['request'].method == 'PATCH':
             return data
-        
-        author=self.context['request'].user
-        title_id=self.context['view'].kwargs.get('title_id')
-        
+
+        author = self.context['request'].user
+        title_id = self.context['view'].kwargs.get('title_id')
+
         if Review.objects.filter(
                 author=author, title=title_id).exists():
             raise serializers.ValidationError(
@@ -87,14 +83,13 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
         return data
 
-
     def validate_score(self, value):
         if not 1 <= value <= 10:
             raise serializers.ValidationError(
                 'enter a score from 1 to 10 '
             )
         return value
-          
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -102,16 +97,17 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Categories
         fields = ('name', 'slug')
 
+
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField(read_only=True, default=None)
     description = serializers.CharField(required=False)
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
-    
+
     class Meta:
         model = Titles
         fields = '__all__'
-    
+
     def create(self, validated_data):
         genres = self.initial_data['genre']
         category = get_object_or_404(Categories,
@@ -120,13 +116,10 @@ class TitleSerializer(serializers.ModelSerializer):
         for genre in genres:
             current_genre = get_object_or_404(Genres, slug=genre)
             TitlesGenres.objects.create(genre=current_genre, title=title)
-        print(Titles.objects.filter(id=title.id).exists())
-        print(title.genre)
-#        for genre in genres:
         current_genre = get_object_or_404(Genres, slug=genres)
         TitlesGenres.objects.create(genre=current_genre, title=title)
         return title
-    
+
     def get_rating(self, obj):
         if obj.reviews.exists():
             return int(obj.reviews.aggregate(Avg('score'))['score__avg'])
@@ -135,14 +128,20 @@ class TitleSerializer(serializers.ModelSerializer):
     def validate_year(self, value):
         if value <= dt.datetime.now().year:
             return value
-        raise serializers.ValidationError('Год выпуска не может быть больше текущего!')
+        raise serializers.ValidationError(
+            'Год выпуска не может быть больше текущего!'
+        )
 
     def validate_category(self, value):
         if not Categories.objects.get(slug=value).exists():
-            raise serializers.ValidationError('Категории с таким slug не существует')
+            raise serializers.ValidationError(
+                'Категории с таким slug не существует'
+            )
         return value
 
     def validate_genre(self, value):
         if not Genres.objects.get(slug=value).exists():
-            raise serializers.ValidationError('Жанра с таким slug не существует')
+            raise serializers.ValidationError(
+                'Жанра с таким slug не существует'
+            )
         return value

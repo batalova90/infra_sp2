@@ -1,7 +1,7 @@
 from categories.models import Categories, Genres, Titles
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
@@ -111,7 +111,6 @@ class MixinViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     pass
 
 
-
 class GenreViewSet(MixinViewSet, viewsets.GenericViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenreSerializer
@@ -133,7 +132,7 @@ class CategoryViewSet(MixinViewSet, viewsets.GenericViewSet):
 
 
 class ReviewsPagination(PageNumberPagination):
-    page_size = 10 
+    page_size = 10
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -154,7 +153,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentPagination(PageNumberPagination):
-    page_size = 10 
+    page_size = 10
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -164,6 +163,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (
         IsAdmin | IsModerator | IsAuthorOrReadOnly,
     )
+
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
         return review.comments.all()
@@ -172,9 +172,9 @@ class CommentViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, id=self.kwargs.get('review_id'))
         serializer.save(author=self.request.user, review=review)
 
-        
-class TitleViewSet(viewsets.GenericViewSet, MixinViewSet, mixins.RetrieveModelMixin,
-                   mixins.UpdateModelMixin):
+
+class TitleViewSet(viewsets.GenericViewSet, MixinViewSet,
+                   mixins.RetrieveModelMixin, mixins.UpdateModelMixin):
     queryset = Titles.objects.all()
     serializer_class = TitleSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,
